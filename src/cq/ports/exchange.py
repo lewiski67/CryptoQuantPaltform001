@@ -1,0 +1,19 @@
+"""Exchange access port."""
+
+from typing import Protocol
+
+from cq.domain import AccountState, Order, OrderIntent, Symbol, SymbolRules
+
+
+class ExchangePort(Protocol):
+    def get_symbol_rules(self, symbol: Symbol) -> SymbolRules: ...
+
+    def get_account(self) -> AccountState: ...
+
+    def place_order(self, intent: OrderIntent) -> Order: ...
+
+    def cancel_order(self, order_id: str) -> None: ...
+
+    def get_order(self, order_id: str) -> Order | None: ...
+
+    def get_open_orders(self, symbol: Symbol | None = None) -> tuple[Order, ...]: ...
