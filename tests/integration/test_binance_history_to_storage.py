@@ -1,9 +1,10 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 from tests.unit.domain.helpers import assert_value_error
 
-from cq.domain import Symbol
+from cq.domain import Candle, Symbol
 from cq.exchanges.binance import BinanceKline, download_historical_candles
 from cq.storage import JsonlCandleStore
 
@@ -42,6 +43,7 @@ def test_binance_history_download_skips_existing_candles(tmp_path: Path) -> None
     store = JsonlCandleStore(tmp_path)
     client = FakeBinanceClient((sample_kline(open_hour=0, close_hour=1),))
     download_historical_candles(client, store, symbol, "1h", timestamp(0), timestamp(1))
+    client.requests = ()
 
     fetched_count, saved_count = download_historical_candles(
         client,
@@ -53,9 +55,32 @@ def test_binance_history_download_skips_existing_candles(tmp_path: Path) -> None
     )
 
     loaded = store.load_candles(symbol, "1h", timestamp(0), timestamp(1))
-    assert fetched_count == 1
+    assert fetched_count == 0
     assert saved_count == 0
+    assert client.requests == ()
     assert len(loaded) == 1
+
+
+def test_binance_history_download_fills_missing_prefix_range(tmp_path: Path) -> None:
+    symbol = btc_usdt()
+    store = JsonlCandleStore(tmp_path)
+    store.save_candles((candle(1),))
+    client = FakeBinanceClient((sample_kline(open_hour=0, close_hour=1),))
+
+    fetched_count, saved_count = download_historical_candles(
+        client,
+        store,
+        symbol,
+        "1h",
+        timestamp(0),
+        timestamp(2),
+    )
+
+    loaded = store.load_candles(symbol, "1h", timestamp(0), timestamp(2))
+    assert fetched_count == 1
+    assert saved_count == 1
+    assert client.requests == ((timestamp(0), timestamp(1), 1000),)
+    assert len(loaded) == 2
 
 
 def test_binance_history_download_rejects_invalid_limit(tmp_path: Path) -> None:
@@ -108,6 +133,20 @@ def sample_kline(open_hour: int, close_hour: int) -> BinanceKline:
         "105.00",
         "12.5",
         millis(timestamp(close_hour) - timedelta(milliseconds=1)),
+    )
+
+
+def candle(hour: int) -> Candle:
+    return Candle(
+        symbol=btc_usdt(),
+        interval="1h",
+        open_time=timestamp(hour),
+        close_time=timestamp(hour + 1),
+        open=Decimal("100"),
+        high=Decimal("110"),
+        low=Decimal("90"),
+        close=Decimal("105"),
+        volume=Decimal("1"),
     )
 
 

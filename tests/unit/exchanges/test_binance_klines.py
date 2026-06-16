@@ -1,5 +1,7 @@
+import json
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, cast
 
 from tests.unit.domain.helpers import assert_value_error
@@ -48,6 +50,23 @@ def test_kline_to_candle_rejects_bad_decimal() -> None:
         return kline_to_candle(btc_usdt(), "1h", record)
 
     assert_value_error("invalid Binance kline", map_bad_record)
+
+
+def test_kline_to_candle_maps_fixture_sample() -> None:
+    candle = kline_to_candle(btc_usdt(), "1h", load_fixture()[0])
+
+    assert candle.open_time == timestamp(0)
+    assert candle.close_time == timestamp(1)
+    assert candle.open == Decimal("87648.21000000")
+    assert candle.close == Decimal("87809.23000000")
+
+
+def load_fixture() -> list[list[object]]:
+    path = Path("tests/fixtures/klines_sample.json")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, list):
+        raise AssertionError("fixture must contain a list")
+    return cast(list[list[object]], loaded)
 
 
 def sample_kline(open_hour: int = 0, close_hour: int = 1) -> tuple[object, ...]:

@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Protocol
 
-from cq.data import validate_candle_series
-from cq.domain import Candle, Symbol
+from cq.data import find_missing_ranges, validate_candle_series
+from cq.domain import Symbol
 from cq.exchanges.binance.klines import BinanceKline, klines_to_candles
 from cq.ports import HistoricalDataStorePort
 
@@ -34,6 +34,34 @@ def download_historical_candles(
     if limit <= 0 or limit > 1000:
         raise ValueError("limit must be between 1 and 1000")
 
+    existing = store.load_candles(symbol, interval, start, end)
+    missing_ranges = find_missing_ranges(existing, start, end)
+    fetched_count = 0
+    saved_count = 0
+    for missing_start, missing_end in missing_ranges:
+        fetched, saved = download_missing_range(
+            client,
+            store,
+            symbol,
+            interval,
+            missing_start,
+            missing_end,
+            limit,
+        )
+        fetched_count += fetched
+        saved_count += saved
+    return fetched_count, saved_count
+
+
+def download_missing_range(
+    client: BinanceKlineClient,
+    store: HistoricalDataStorePort,
+    symbol: Symbol,
+    interval: str,
+    start: datetime,
+    end: datetime,
+    limit: int,
+) -> tuple[int, int]:
     fetched_count = 0
     saved_count = 0
     cursor = start
@@ -46,27 +74,11 @@ def download_historical_candles(
         validate_candle_series(candles)
         fetched_count += len(candles)
 
-        new_candles = filter_existing_candles(store, symbol, interval, start, end, candles)
-        if new_candles:
-            store.save_candles(new_candles)
-            saved_count += len(new_candles)
+        store.save_candles(candles)
+        saved_count += len(candles)
 
         next_cursor = candles[-1].close_time
         if next_cursor <= cursor:
             raise ValueError("Binance klines did not advance cursor")
         cursor = next_cursor
-
     return fetched_count, saved_count
-
-
-def filter_existing_candles(
-    store: HistoricalDataStorePort,
-    symbol: Symbol,
-    interval: str,
-    start: datetime,
-    end: datetime,
-    candles: tuple[Candle, ...],
-) -> tuple[Candle, ...]:
-    existing = store.load_candles(symbol, interval, start, end)
-    existing_open_times = {candle.open_time for candle in existing}
-    return tuple(candle for candle in candles if candle.open_time not in existing_open_times)
