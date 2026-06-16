@@ -1,0 +1,13 @@
+[project]
+name = "crypto-quant"
+version = "0.1.0"
+description = "A modular cryptocurrency quantitative trading platform."
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

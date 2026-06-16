@@ -1,0 +1,50 @@
+# Local agent/context files
+AGENTS.md
+CRYPTO_QUANT_TODOLIST.md
+docs/PROJECT_HANDOFF.md
+.agents/
+.codex/
+.git.invalid*/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+
+# Data and runtime artifacts
+data/**
+!data/
+!data/**/
+!data/**/.gitkeep
+*.sqlite
+*.sqlite3
+*.db
+/logs/
+/reports/
+
+# Frontend
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
