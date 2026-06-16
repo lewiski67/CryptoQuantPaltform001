@@ -1,1 +1,4 @@
-env: backtest
+mode: backtest
+data:
+  start: "2026-01-01T00:00:00+00:00"
+  end: "2026-02-01T00:00:00+00:00"

@@ -1,1 +1,5 @@
-env: live
+mode: live
+live:
+  enabled: false
+  require_confirmation: true
+  reconciliation_required: true

@@ -1,1 +1,18 @@
-env: base
+exchange:
+  name: binance
+  symbols:
+    - value: BTCUSDT
+      base_asset: BTC
+      quote_asset: USDT
+data:
+  interval: 1h
+  start: null
+  end: null
+storage:
+  root: data
+risk:
+  max_order_notional: "100"
+live:
+  enabled: false
+  require_confirmation: false
+  reconciliation_required: false
